@@ -53,6 +53,13 @@
   .matched {
     background-color: #4CAF50 !important;
     color: white !important;
+    animation: winAnimation 0.5s ease-in-out 2;
+  }
+
+  @keyframes winAnimation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
   }
 
   button {
@@ -133,7 +140,6 @@ function toggleNumber(num, element) {
   } else {
     if (selectedNumbers.length < 4) {
       selectedNumbers.push(num);
-      // Clean any old style
       element.classList.remove("matched");
       element.classList.add("selected");
     } else {
@@ -151,7 +157,7 @@ document.getElementById("playButton").addEventListener("click", async () => {
   totalSpent++;
   spentEl.textContent = totalSpent;
 
-  // ✅ Before each round: reset all selected numbers to yellow again
+  // Reset all numbers for new round
   document.querySelectorAll(".number").forEach(el => {
     const num = parseInt(el.textContent);
     if (selectedNumbers.includes(num)) {
@@ -171,7 +177,7 @@ document.getElementById("playButton").addEventListener("click", async () => {
   resultEl.innerHTML = `Winning numbers: <span id="winningNumbers"></span><br>`;
   const winningNumbersEl = document.getElementById("winningNumbers");
 
-  // Reveal with delay
+  // Reveal numbers with delay
   for (let i = 0; i < winningNumbers.length; i++) {
     await new Promise(r => setTimeout(r, 800));
     const num = winningNumbers[i];
@@ -186,9 +192,13 @@ document.getElementById("playButton").addEventListener("click", async () => {
 
   const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
   let message = `<br>You matched ${matches} number(s).<br>`;
+
   if (matches === 4) {
-    totalWon += 30;
-    message += "🎉 Congratulations! You won $30!";
+    totalWon += 21;
+    message += "🎉 Congratulations! You won $21!";
+  } else if (matches === 3) {
+    totalWon += 1;
+    message += "🎉 Nice! You won $1!";
   } else {
     message += "😞 No payout this time.";
   }
