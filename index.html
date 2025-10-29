@@ -5,34 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lottery Simulator</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  .numbers { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .number {
-    width: 40px; height: 40px;
-    text-align: center; line-height: 40px;
-    border: 1px solid #333; cursor: pointer;
-    transition: background 0.3s, color 0.3s;
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    min-height: 100vh;
   }
 
-  /* Yellow when selected */
-  .selected { background-color: gold; color: black; }
+  h2 {
+    color: #ffeb3b;
+  }
 
-  /* Green when drawn/matched */
-  .matched { background-color: #4CAF50; color: white; }
+  .numbers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .number {
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid white;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+  }
+
+  .number:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .selected {
+    background-color: gold !important;
+    color: black !important;
+  }
+
+  .matched {
+    background-color: #4CAF50 !important;
+    color: white !important;
+  }
+
+  button {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, background 0.3s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  #playButton {
+    background: #ffeb3b;
+    color: black;
+  }
+
+  #resetButton {
+    background: #f44336;
+    color: white;
+  }
+
+  #result {
+    margin-top: 20px;
+  }
+
+  #stats {
+    margin-top: 15px;
+  }
 </style>
 </head>
 <body>
 
-<h2>Lottery Simulator</h2>
+<h2>🎰 Lottery Simulator 🎲</h2>
 <p>Select 4 numbers from 1 to 7:</p>
 
 <div id="numberContainer" class="numbers"></div>
-<button id="playButton">Play Lottery ($1)</button>
-<button id="resetButton">Reset Selection</button>
+<div>
+  <button id="playButton">Play Lottery ($1)</button>
+  <button id="resetButton">Reset</button>
+</div>
 
 <p id="result"></p>
-<p>Total Spent: $<span id="spent">0</span></p>
-<p>Total Won: $<span id="won">0</span></p>
+
+<div id="stats">
+  <p>Total Spent: $<span id="spent">0</span></p>
+  <p>Total Won: $<span id="won">0</span></p>
+</div>
 
 <script>
 let selectedNumbers = [];
@@ -44,26 +116,96 @@ const resultEl = document.getElementById("result");
 const spentEl = document.getElementById("spent");
 const wonEl = document.getElementById("won");
 
-// Create number buttons (1–7)
+// Create buttons 1–7
 for (let i = 1; i <= 7; i++) {
-    const div = document.createElement("div");
-    div.textContent = i;
-    div.classList.add("number");
-    div.addEventListener("click", () => toggleNumber(i, div));
-    numberContainer.appendChild(div);
+  const div = document.createElement("div");
+  div.textContent = i;
+  div.classList.add("number");
+  div.addEventListener("click", () => toggleNumber(i, div));
+  numberContainer.appendChild(div);
 }
 
 function toggleNumber(num, element) {
-    if (selectedNumbers.includes(num)) {
-        selectedNumbers = selectedNumbers.filter(n => n !== num);
-        element.classList.remove("selected");
+  if (selectedNumbers.includes(num)) {
+    // Unselect
+    selectedNumbers = selectedNumbers.filter(n => n !== num);
+    element.classList.remove("selected", "matched");
+  } else {
+    if (selectedNumbers.length < 4) {
+      selectedNumbers.push(num);
+      // Clean any old style
+      element.classList.remove("matched");
+      element.classList.add("selected");
     } else {
-        if (selectedNumbers.length < 4) {
-            selectedNumbers.push(num);
-            element.classList.add("selected");
-        } else {
-            alert("You can only select 4 numbers.");
-        }
+      alert("You can only select 4 numbers.");
+    }
+  }
+}
+
+document.getElementById("playButton").addEventListener("click", async () => {
+  if (selectedNumbers.length !== 4) {
+    alert("Please select exactly 4 numbers.");
+    return;
+  }
+
+  totalSpent++;
+  spentEl.textContent = totalSpent;
+
+  // ✅ Before each round: reset all selected numbers to yellow again
+  document.querySelectorAll(".number").forEach(el => {
+    const num = parseInt(el.textContent);
+    if (selectedNumbers.includes(num)) {
+      el.classList.remove("matched");
+      el.classList.add("selected");
+    } else {
+      el.classList.remove("selected", "matched");
+    }
+  });
+
+  const winningNumbers = [];
+  while (winningNumbers.length < 4) {
+    const rand = Math.floor(Math.random() * 7) + 1;
+    if (!winningNumbers.includes(rand)) winningNumbers.push(rand);
+  }
+
+  resultEl.innerHTML = `Winning numbers: <span id="winningNumbers"></span><br>`;
+  const winningNumbersEl = document.getElementById("winningNumbers");
+
+  // Reveal with delay
+  for (let i = 0; i < winningNumbers.length; i++) {
+    await new Promise(r => setTimeout(r, 800));
+    const num = winningNumbers[i];
+    winningNumbersEl.innerHTML += num + " ";
+    if (selectedNumbers.includes(num)) {
+      const el = Array.from(document.querySelectorAll(".number"))
+        .find(n => parseInt(n.textContent) === num);
+      el.classList.remove("selected");
+      el.classList.add("matched");
+    }
+  }
+
+  const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
+  let message = `<br>You matched ${matches} number(s).<br>`;
+  if (matches === 4) {
+    totalWon += 40;
+    message += "🎉 Congratulations! You won $40!";
+  } else {
+    message += "😞 No payout this time.";
+  }
+
+  resultEl.innerHTML += message;
+  wonEl.textContent = totalWon;
+});
+
+document.getElementById("resetButton").addEventListener("click", () => {
+  selectedNumbers = [];
+  document.querySelectorAll(".number").forEach(n => n.classList.remove("selected", "matched"));
+  resultEl.innerHTML = "";
+});
+</script>
+
+</body>
+</html>        }
     }
 }
 
