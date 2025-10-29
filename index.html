@@ -187,8 +187,8 @@ document.getElementById("playButton").addEventListener("click", async () => {
   const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
   let message = `<br>You matched ${matches} number(s).<br>`;
   if (matches === 4) {
-    totalWon += 40;
-    message += "🎉 Congratulations! You won $40!";
+    totalWon += 30;
+    message += "🎉 Congratulations! You won $30!";
   } else {
     message += "😞 No payout this time.";
   }
