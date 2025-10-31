@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lottery Simulator</title>
 <style>
   body {
@@ -10,99 +10,70 @@
     margin: 0;
     padding: 20px;
     text-align: center;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
     color: white;
     min-height: 100vh;
   }
 
-  h2 {
-    color: #ffeb3b;
-  }
+  h2 { color: #ffeb3b; }
 
-  .numbers {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-  }
+  .rows { display:flex; flex-direction:column; align-items:center; gap:12px; margin:20px 0; }
+  .row  { display:flex; gap:12px; justify-content:center; }
 
   .number {
-    width: 50px;
-    height: 50px;
-    line-height: 50px;
-    text-align: center;
-    border-radius: 8px;
-    border: 2px solid white;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: bold;
+    width:60px; height:60px; line-height:60px; text-align:center;
+    border-radius:8px; border:2px solid white;
+    background:rgba(255,255,255,0.1); color:white;
+    cursor:pointer; transition:all 0.3s; font-weight:bold; font-size:30px;
+    user-select:none;
   }
+  .number:hover { background: rgba(255,255,255,0.18); }
 
-  .number:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
+  .selected { background-color: gold !important; color: black !important; }
+  .matched  { background-color: #4CAF50 !important; color: white !important; animation: winAnimation 0.5s ease-in-out 2; }
+  .missed   { background-color: orange !important; color: black !important; animation: fadeIn 0.6s ease-in; }
 
-  .selected {
-    background-color: gold !important;
-    color: black !important;
-  }
+  .disabled { pointer-events: none; cursor: not-allowed !important; }
 
-  .matched {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    animation: winAnimation 0.5s ease-in-out 2;
-  }
-
-  @keyframes winAnimation {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1); }
-  }
+  @keyframes winAnimation { 0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)} }
+  @keyframes fadeIn { 0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)} }
 
   button {
-    margin: 5px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: transform 0.2s, background 0.3s;
+    margin:5px; padding:10px 20px; border:none; border-radius:8px;
+    cursor:pointer; font-weight:bold; transition:transform 0.2s, background 0.3s;
+    font-size:24px;
   }
+  button:hover:enabled { transform:scale(1.05); }
 
-  button:hover {
-    transform: scale(1.05);
-  }
+  #playButton { background:#ffeb3b; color:black; }
+  #playButton:disabled { background:#a59f3b; color:#555; cursor:not-allowed; }
 
-  #playButton {
-    background: #ffeb3b;
-    color: black;
-  }
+  #resetButton { background:#f44336; color:white; }
 
-  #resetButton {
-    background: #f44336;
-    color: white;
-  }
+  #result { margin-top:20px; font-size:20px; }
+  #stats  { margin-top:15px; }
 
-  #result {
-    margin-top: 20px;
-  }
+  #remainingPanel { margin-top:10px; font-weight:bold; color:#ffeb3b; font-size:18px; }
 
-  #stats {
-    margin-top: 15px;
+  @media (max-width:420px){
+    .number{ width:50px; height:50px; line-height:50px; font-size:24px; }
   }
 </style>
 </head>
 <body>
 
 <h2>🎰 Lottery Simulator 🎲</h2>
-<p>Select 4 numbers from 1 to 7:</p>
+<p>Select 4 colours</p>
+<div id="remainingPanel">Colours left to choose: <span id="remaining">4</span></div>
 
-<div id="numberContainer" class="numbers"></div>
+<div class="rows" id="numberContainer">
+  <div class="row" id="row1"></div>
+  <div class="row" id="row2"></div>
+  <div class="row" id="row3"></div>
+</div>
+
 <div>
-  <button id="playButton">Play Lottery ($1)</button>
+  <button id="playButton" disabled>▶️</button>
   <button id="resetButton">Reset</button>
 </div>
 
@@ -117,101 +88,134 @@
 let selectedNumbers = [];
 let totalSpent = 0;
 let totalWon = 0;
+let isDrawing = false;
 
-const numberContainer = document.getElementById("numberContainer");
 const resultEl = document.getElementById("result");
-const spentEl = document.getElementById("spent");
-const wonEl = document.getElementById("won");
+const spentEl  = document.getElementById("spent");
+const wonEl    = document.getElementById("won");
+const remainingEl = document.getElementById("remaining");
+const playButton  = document.getElementById("playButton");
 
-// Create buttons 1–7
-for (let i = 1; i <= 7; i++) {
-  const div = document.createElement("div");
-  div.textContent = i;
-  div.classList.add("number");
-  div.addEventListener("click", () => toggleNumber(i, div));
-  numberContainer.appendChild(div);
+// Number → Symbol map
+const symbolMap = {
+  1: "🔴",
+  2: "🟠",
+  3: "🟡",
+  4: "🟢",
+  5: "🔵",
+  6: "🟣",
+  7: "🟤"
+};
+
+const layout = [
+  [1,2],
+  [3,4,5],
+  [6,7]
+];
+
+// create number buttons (colours)
+layout.forEach((rowNums, i) => {
+  const row = document.getElementById(`row${i+1}`);
+  rowNums.forEach(num => {
+    const el = document.createElement('div');
+    el.className = 'number';
+    el.dataset.value = num;         // store actual number for logic
+    el.innerHTML = symbolMap[num];  // show colour symbol
+    el.addEventListener('click', () => toggleNumber(num, el));
+    row.appendChild(el);
+  });
+});
+
+function updateRemainingAndPlayState(){
+  remainingEl.textContent = 4 - selectedNumbers.length;
+  playButton.disabled = (selectedNumbers.length !== 4) || isDrawing;
 }
 
-function toggleNumber(num, element) {
-  if (selectedNumbers.includes(num)) {
-    // Unselect
+function toggleNumber(num, element){
+  if (isDrawing) return;
+
+  if (selectedNumbers.includes(num)){
     selectedNumbers = selectedNumbers.filter(n => n !== num);
-    element.classList.remove("selected", "matched");
-  } else {
-    if (selectedNumbers.length < 4) {
-      selectedNumbers.push(num);
-      element.classList.remove("matched");
-      element.classList.add("selected");
-    } else {
-      alert("You can only select 4 numbers.");
-    }
+    element.classList.remove('selected');
+  } else if (selectedNumbers.length < 4){
+    selectedNumbers.push(num);
+    element.classList.add('selected');
   }
+  updateRemainingAndPlayState();
 }
 
-document.getElementById("playButton").addEventListener("click", async () => {
-  if (selectedNumbers.length !== 4) {
-    alert("Please select exactly 4 numbers.");
-    return;
-  }
+playButton.addEventListener('click', async () => {
+  if (isDrawing || selectedNumbers.length !== 4) return;
+
+  isDrawing = true;
+  updateRemainingAndPlayState();
+  document.querySelectorAll('.number').forEach(n => n.classList.add('disabled'));
 
   totalSpent++;
   spentEl.textContent = totalSpent;
 
-  // Reset all numbers for new round
-  document.querySelectorAll(".number").forEach(el => {
-    const num = parseInt(el.textContent);
-    if (selectedNumbers.includes(num)) {
-      el.classList.remove("matched");
-      el.classList.add("selected");
+  document.querySelectorAll('.number').forEach(el => {
+    const num = parseInt(el.dataset.value);
+    if (selectedNumbers.includes(num)){
+      el.classList.add('selected');
+      el.classList.remove('matched','missed');
     } else {
-      el.classList.remove("selected", "matched");
+      el.classList.remove('selected','matched','missed');
     }
   });
 
   const winningNumbers = [];
-  while (winningNumbers.length < 4) {
-    const rand = Math.floor(Math.random() * 7) + 1;
-    if (!winningNumbers.includes(rand)) winningNumbers.push(rand);
+  while (winningNumbers.length < 4){
+    const r = Math.floor(Math.random()*7)+1;
+    if (!winningNumbers.includes(r)) winningNumbers.push(r);
   }
 
-  resultEl.innerHTML = `Winning numbers: <span id="winningNumbers"></span><br>`;
-  const winningNumbersEl = document.getElementById("winningNumbers");
+  resultEl.innerHTML = `Winning colours: <span id="winningNumbers"></span><br>`;
+  const winningNumbersEl = document.getElementById('winningNumbers');
 
-  // Reveal numbers with delay
-  for (let i = 0; i < winningNumbers.length; i++) {
-    await new Promise(r => setTimeout(r, 800));
+  for (let i=0; i<winningNumbers.length; i++){
+    await new Promise(res => setTimeout(res, 2000));
     const num = winningNumbers[i];
-    winningNumbersEl.innerHTML += num + " ";
-    if (selectedNumbers.includes(num)) {
-      const el = Array.from(document.querySelectorAll(".number"))
-        .find(n => parseInt(n.textContent) === num);
-      el.classList.remove("selected");
-      el.classList.add("matched");
+    winningNumbersEl.innerHTML += symbolMap[num] + ' ';
+    const el = Array.from(document.querySelectorAll('.number'))
+      .find(n => parseInt(n.dataset.value) === num);
+    if (!el) continue;
+    if (selectedNumbers.includes(num)){
+      el.classList.remove('selected');
+      el.classList.add('matched');
+    } else {
+      el.classList.add('missed');
     }
   }
 
   const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
-  let message = `<br>You matched ${matches} number(s).<br>`;
-
-  if (matches === 4) {
+  let message = `<br>You matched ${matches} colour(s).<br>`;
+  if (matches === 4){
     totalWon += 21;
     message += "🎉 Congratulations! You won $21!";
-  } else if (matches === 3) {
+  } else if (matches === 3){
     totalWon += 1;
     message += "🎉 Nice! You won $1!";
   } else {
     message += "No payout this time.";
   }
-
   resultEl.innerHTML += message;
   wonEl.textContent = totalWon;
+
+  isDrawing = false;
+  document.querySelectorAll('.number').forEach(n => n.classList.remove('disabled'));
+  updateRemainingAndPlayState();
 });
 
-document.getElementById("resetButton").addEventListener("click", () => {
+document.getElementById('resetButton').addEventListener('click', () => {
+  if (isDrawing) return;
   selectedNumbers = [];
-  document.querySelectorAll(".number").forEach(n => n.classList.remove("selected", "matched"));
-  resultEl.innerHTML = "";
+  document.querySelectorAll('.number').forEach(n => n.classList.remove('selected','matched','missed'));
+  resultEl.innerHTML = '';
+  updateRemainingAndPlayState();
 });
+
+updateRemainingAndPlayState();
 </script>
 
 </body>
