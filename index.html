@@ -24,7 +24,7 @@
     width:60px; height:60px; line-height:60px; text-align:center;
     border-radius:8px; border:2px solid white;
     background:rgba(255,255,255,0.1); color:white;
-    cursor:pointer; transition:all 0.3s; font-weight:bold; font-size:30px;
+    cursor:pointer; transition:all 0.3s; font-weight:bold; font-size:24px;
     user-select:none;
   }
   .number:hover { background: rgba(255,255,255,0.18); }
@@ -56,15 +56,15 @@
   #remainingPanel { margin-top:10px; font-weight:bold; color:#ffeb3b; font-size:18px; }
 
   @media (max-width:420px){
-    .number{ width:50px; height:50px; line-height:50px; font-size:24px; }
+    .number{ width:50px; height:50px; line-height:50px; font-size:20px; }
   }
 </style>
 </head>
 <body>
 
 <h2>🎰 Lottery Simulator 🎲</h2>
-<p>Select 4 colours</p>
-<div id="remainingPanel">Colours left to choose: <span id="remaining">4</span></div>
+<p>Select 4 days</p>
+<div id="remainingPanel">Days left to choose: <span id="remaining">4</span></div>
 
 <div class="rows" id="numberContainer">
   <div class="row" id="row1"></div>
@@ -96,15 +96,15 @@ const wonEl    = document.getElementById("won");
 const remainingEl = document.getElementById("remaining");
 const playButton  = document.getElementById("playButton");
 
-// Number → Symbol map
-const symbolMap = {
-  1: "🔴",
-  2: "🟠",
-  3: "🟡",
-  4: "🟢",
-  5: "🔵",
-  6: "🟣",
-  7: "🟤"
+// Number → Day map
+const dayMap = {
+  1: "Mo",
+  2: "Tu",
+  3: "We",
+  4: "Th",
+  5: "Fr",
+  6: "Sa",
+  7: "Su"
 };
 
 const layout = [
@@ -113,14 +113,14 @@ const layout = [
   [6,7]
 ];
 
-// create number buttons (colours)
+// create day buttons
 layout.forEach((rowNums, i) => {
   const row = document.getElementById(`row${i+1}`);
   rowNums.forEach(num => {
     const el = document.createElement('div');
     el.className = 'number';
-    el.dataset.value = num;         // store actual number for logic
-    el.innerHTML = symbolMap[num];  // show colour symbol
+    el.dataset.value = num;
+    el.innerHTML = dayMap[num];
     el.addEventListener('click', () => toggleNumber(num, el));
     row.appendChild(el);
   });
@@ -170,13 +170,13 @@ playButton.addEventListener('click', async () => {
     if (!winningNumbers.includes(r)) winningNumbers.push(r);
   }
 
-  resultEl.innerHTML = `Winning colours: <span id="winningNumbers"></span><br>`;
+  resultEl.innerHTML = `Winning days: <span id="winningNumbers"></span><br>`;
   const winningNumbersEl = document.getElementById('winningNumbers');
 
   for (let i=0; i<winningNumbers.length; i++){
     await new Promise(res => setTimeout(res, 2000));
     const num = winningNumbers[i];
-    winningNumbersEl.innerHTML += symbolMap[num] + ' ';
+    winningNumbersEl.innerHTML += dayMap[num] + ' ';
     const el = Array.from(document.querySelectorAll('.number'))
       .find(n => parseInt(n.dataset.value) === num);
     if (!el) continue;
@@ -189,7 +189,7 @@ playButton.addEventListener('click', async () => {
   }
 
   const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
-  let message = `<br>You matched ${matches} colour(s).<br>`;
+  let message = `<br>You matched ${matches} day(s).<br>`;
   if (matches === 4){
     totalWon += 21;
     message += "🎉 Congratulations! You won $21!";
