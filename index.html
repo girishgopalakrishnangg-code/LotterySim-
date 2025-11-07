@@ -64,7 +64,7 @@
 
 <h2>🎰 Lottery Simulator 🎲</h2>
 <p>Select 4 days</p>
-<div id="remainingPanel">Days left to choose: <span id="remaining">4</span></div>
+<div id="remainingPanel">Numbers left to choose: <span id="remaining">4</span></div>
 
 <div class="rows" id="numberContainer">
   <div class="row" id="row1"></div>
@@ -170,7 +170,7 @@ playButton.addEventListener('click', async () => {
     if (!winningNumbers.includes(r)) winningNumbers.push(r);
   }
 
-  resultEl.innerHTML = `Winning days: <span id="winningNumbers"></span><br>`;
+  resultEl.innerHTML = `Winning Numbers: <span id="winningNumbers"></span><br>`;
   const winningNumbersEl = document.getElementById('winningNumbers');
 
   for (let i=0; i<winningNumbers.length; i++){
