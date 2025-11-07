@@ -189,7 +189,7 @@ playButton.addEventListener('click', async () => {
   }
 
   const matches = selectedNumbers.filter(n => winningNumbers.includes(n)).length;
-  let message = `<br>You matched ${matches} day(s).<br>`;
+  let message = `<br>You matched ${matches} number(s).<br>`;
   if (matches === 4){
     totalWon += 21;
     message += "🎉 Congratulations! You won $21!";
